@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 
         const filterConditions = [];
 
-        // If search query exists, filter by subject name OR subject code
+        // If a search query exists, filter by subject name OR subject code
         if (search) {
             filterConditions.push(
                 or (
@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
             );
         }
 
-        // If department filter exists, match department name
+        // If a department filter exists, match the department name
         if (department) {
             const deptPattern = `%${String(department).replace(/[%_]/g, '\\$&')}%`;
             filterConditions.push(ilike(departments.name, deptPattern));

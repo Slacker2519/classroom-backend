@@ -8,6 +8,27 @@
       "when": 1772127611099,
       "tag": "0000_steady_sheva_callister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772445996901,
+      "tag": "0001_cheerful_unicorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772523987111,
+      "tag": "0002_left_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772525672592,
+      "tag": "0003_light_doctor_strange",
+      "breakpoints": true
     }
   ]
 }
