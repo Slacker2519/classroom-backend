@@ -22,7 +22,7 @@ const securityMiddleware = async (req: Request, res: Response, next: NextFunctio
                 message= 'User request limit exceeded (10 per minute). Please wait.';
                 break;
             default:
-                limit = 5;
+                limit = 6;
                 message= 'Guest request limit exceeded (5 per minute). Please sign up for higher limits.';
                 break;
         }
@@ -53,7 +53,7 @@ const securityMiddleware = async (req: Request, res: Response, next: NextFunctio
         }
 
         if (decision.isDenied() && decision.reason.isRateLimit()) {
-            return res.status(403).json({ error: 'Too many requests.', message });
+            return res.status(429).json({ error: 'Too many requests.', message });
         }
 
         next();
