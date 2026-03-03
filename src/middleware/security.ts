@@ -23,7 +23,7 @@ const securityMiddleware = async (req: Request, res: Response, next: NextFunctio
                 break;
             default:
                 limit = 6;
-                message= 'Guest request limit exceeded (5 per minute). Please sign up for higher limits.';
+                message= 'Guest request limit exceeded (6 per minute). Please sign up for higher limits.';
                 break;
         }
 
@@ -58,7 +58,7 @@ const securityMiddleware = async (req: Request, res: Response, next: NextFunctio
 
         next();
     } catch (e) {
-        console.error('Arcjet middle ware error: ', e);
+        console.error('Arcjet middleware error: ', e);
         res.status(500).json({ error: 'Internal error', message: 'Something went wrong with security middleware'});
     }
 };
