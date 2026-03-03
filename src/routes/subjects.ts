@@ -65,6 +65,15 @@ router.get("/", async (req, res) => {
         })
     } catch (e) {
         console.error(`Get /subjects error: ${e}`);
+
+        if (e && typeof e === "object") {
+            const anyErr = e as any;
+            console.error("Get /subjects error message:", anyErr.message);
+            console.error("Get /subjects error cause:", anyErr.cause);
+            console.error("Get /subjects error error:", anyErr.error);
+            console.error("Get /subjects error response:", anyErr.response);
+        }
+
         res.status(500).json({ error: "Failed to get subjects" });
     }
 })
