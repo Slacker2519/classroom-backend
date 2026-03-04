@@ -89,6 +89,4 @@ CREATE INDEX "enrollments_class_id_idx" ON "enrollments" USING btree ("classId")
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("userId");--> statement-breakpoint
 CREATE UNIQUE INDEX "account_provider_account_unique" ON "account" USING btree ("providerId","accountId");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("userId");--> statement-breakpoint
-CREATE UNIQUE INDEX "session_token_unique" ON "session" USING btree ("token");--> statement-breakpoint
-CREATE UNIQUE INDEX "user_email_unique" ON "user" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
