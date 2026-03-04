@@ -20,7 +20,7 @@ app.use(cors({
   credentials: true,
 }))
 
-app.all('/api/auth/*splat', toNodeHandler(auth));
+app.all('/api/auth/*splat', securityMiddleware, toNodeHandler(auth));
 
 app.use(express.json());
 
