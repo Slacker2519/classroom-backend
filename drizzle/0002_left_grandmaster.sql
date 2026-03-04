@@ -42,19 +42,19 @@ ALTER TABLE "account" DROP CONSTRAINT "account_userId_user_id_fk";
 ALTER TABLE "session" DROP CONSTRAINT "session_userId_user_id_fk";
 --> statement-breakpoint
 DROP INDEX "account_userId_idx";--> statement-breakpoint
-DROP INDEX "account_provider_account_unique";--> statement-breakpoint
+DROP INDEX IF EXISTS "account_provider_account_unique";--> statement-breakpoint
 DROP INDEX "session_userId_idx";--> statement-breakpoint
-DROP INDEX "session_token_unique";--> statement-breakpoint
-DROP INDEX "user_email_unique";--> statement-breakpoint
+ALTER TABLE "session" DROP CONSTRAINT IF EXISTS "session_token_unique";--> statement-breakpoint
+ALTER TABLE "user" DROP CONSTRAINT IF EXISTS "user_email_unique";--> statement-breakpoint
 DROP INDEX "classes_subject_id_idx";--> statement-breakpoint
 DROP INDEX "classes_teacher_id_idx";--> statement-breakpoint
 DROP INDEX "enrollments_student_id_idx";--> statement-breakpoint
 DROP INDEX "enrollments_class_id_idx";--> statement-breakpoint
 ALTER TABLE "classes" ALTER COLUMN "invite_code" SET DATA TYPE text;--> statement-breakpoint
+ALTER TABLE "enrollments" DROP CONSTRAINT IF EXISTS "enrollments_pkey";--> statement-breakpoint
 ALTER TABLE "enrollments" ADD CONSTRAINT "enrollments_student_id_class_id_pk" PRIMARY KEY("student_id","class_id");--> statement-breakpoint
 ALTER TABLE "classes" ADD CONSTRAINT "classes_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "classes" ADD CONSTRAINT "classes_teacher_id_user_id_fk" FOREIGN KEY ("teacher_id") REFERENCES "public"."user"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "enrollments" ADD CONSTRAINT "enrollments_student_id_user_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "classes" ADD CONSTRAINT "classes_teacher_id_user_id_fk" FOREIGN KEY ("teacher_id") REFERENCES "public"."user"("id") ON DELETE restrict ON UPDATE no action;
 ALTER TABLE "enrollments" ADD CONSTRAINT "enrollments_class_id_classes_id_fk" FOREIGN KEY ("class_id") REFERENCES "public"."classes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subjects" ADD CONSTRAINT "subjects_department_id_departments_id_fk" FOREIGN KEY ("department_id") REFERENCES "public"."departments"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
