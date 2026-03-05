@@ -1,13 +1,13 @@
 import AgentAPI from "apminsight";
 AgentAPI.config();
-import 'dotenv/config';
+// import 'dotenv/config';
 
 import express from 'express';
 import subjectsRouter from "./routes/subjects.js";
 import cors from 'cors';
 import securityMiddleware from "./middleware/security.js";
 import {toNodeHandler} from "better-auth/node";
-import {auth} from "./lib/auth";
+import {auth} from "./lib/auth.js";
 
 const app = express();
 const port = 8000;
