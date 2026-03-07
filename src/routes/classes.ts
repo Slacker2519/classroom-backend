@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db/index.js";
 import { classes, subjects } from "../db/schema/index.js";
-import {and, desc, eq, getTableColumns, ilike, sql} from "drizzle-orm";
+import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
 import {user} from "../db/schema/auth.js";
 
 const router = express.Router();
@@ -18,15 +18,22 @@ router.get("/", async (req, res) => {
         const filterConditions = [];
 
         if (search) {
-            filterConditions.push(ilike(classes.name, `%${search}%`));
+            filterConditions.push(
+                or (
+                    ilike(classes.name, `%${search}%`),
+                    ilike(classes.inviteCode, `%${search}%`),
+                )
+            );
         }
 
         if (subject) {
-            filterConditions.push(ilike(subjects.name, `%${subject}%`));
+            const deptPattern = `%${String(subject).replace(/[%_]/g, '\\$&')}%`;
+            filterConditions.push(ilike(subjects.name, deptPattern));
         }
 
         if (teacher) {
-            filterConditions.push(ilike(user.name, `%${teacher}%`));
+            const deptPattern = `%${String(teacher).replace(/[%_]/g, '\\$&')}%`;
+            filterConditions.push(ilike(user.name, deptPattern));
         }
 
         const whereClause = filterConditions.length > 0 ? and(...filterConditions) : undefined;

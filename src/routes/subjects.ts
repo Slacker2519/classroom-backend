@@ -48,7 +48,9 @@ router.get("/", async (req, res) => {
             .select({
                 ...getTableColumns(subjects),
                 department: { ...getTableColumns(departments)}
-            }).from(subjects).leftJoin(departments, eq(subjects.departmentId, departments.id))
+            })
+            .from(subjects)
+            .leftJoin(departments, eq(subjects.departmentId, departments.id))
             .where(whereClause)
             .orderBy(desc(subjects.createdAt))
             .limit(limitPerPage)
@@ -62,11 +64,11 @@ router.get("/", async (req, res) => {
                 total: totalCount,
                 totalPages: Math.ceil(totalCount / limitPerPage),
             }
-        })
+        });
     } catch (e) {
         console.error(`Get /subjects error: ${e}`);
         res.status(500).json({ error: "Failed to get subjects" });
     }
-})
+});
 
 export default router;
