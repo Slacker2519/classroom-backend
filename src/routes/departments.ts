@@ -1,14 +1,13 @@
 import express from "express";
 import { db } from "../db/index.js";
-import { departments } from "../db/schema/index.js";
+import {departments, subjects} from "../db/schema/index.js";
 import { and, desc, getTableColumns, ilike, sql } from "drizzle-orm";
 
 const router = express.Router();
 
-// Get all departments with optional search and pagination
 router.get("/", async (req, res) => {
     try {
-        const { search, page = 1, limit = 10 } = req.query;
+        const { search, subject, page = 1, limit = 10 } = req.query;
 
         const currentPage = Math.max(1, parseInt(String(page), 10) || 1);
         const limitPerPage = Math.min(Math.max(1, parseInt(String(limit), 10) || 10), 100);

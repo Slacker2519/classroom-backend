@@ -1,11 +1,11 @@
 import express from "express";
-import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
-import {departments, subjects} from "../db/schema/index.js";
 import { db } from "../db/index.js";
+import {departments, subjects} from "../db/schema/index.js";
+import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
+import {error} from "better-auth/api";
 
 const router = express.Router();
 
-// Get all subjects with optional search, filtering and pagination
 router.get("/", async (req, res) => {
     try {
         const { search, department, page = 1, limit = 10 } = req.query;
@@ -17,7 +17,6 @@ router.get("/", async (req, res) => {
 
         const filterConditions = [];
 
-        // If a search query exists, filter by subject name OR subject code
         if (search) {
             filterConditions.push(
                 or (
@@ -27,13 +26,11 @@ router.get("/", async (req, res) => {
             );
         }
 
-        // If a department filter exists, match the department name
         if (department) {
             const deptPattern = `%${String(department).replace(/[%_]/g, '\\$&')}%`;
             filterConditions.push(ilike(departments.name, deptPattern));
         }
 
-        // Combine all filters using AND if any exist
         const whereClause = filterConditions.length > 0 ? and(...filterConditions) : undefined;
 
         const countResult = await db
@@ -68,6 +65,36 @@ router.get("/", async (req, res) => {
     } catch (e) {
         console.error(`Get /subjects error: ${e}`);
         res.status(500).json({ error: "Failed to get subjects" });
+    }
+});
+
+router.post("/", async (req, res) => {
+    try {
+        const { departmentId, name, code, description } = req.body;
+
+            if (!departmentId || !name || !code) {
+            return res.status(400).json({
+                    error: "Missing required fields: departmentId, name, and code are required"
+                });
+            }
+
+            if (typeof departmentId !== 'number' || !Number.isInteger(departmentId)) {
+                return res.status(400).json({ error: "departmentId must be an integer" });
+            }
+
+        const [createdSubject] = await db
+            .insert(subjects)
+            .values({ departmentId, name, code, description })
+            .returning({ id: subjects.id });
+
+        if (!createdSubject) {
+            throw new Error("Failed to create subject");
+        }
+
+        res.status(201).json({ data: createdSubject });
+    } catch (e) {
+        console.error(`POST /subjects error: ${e}`);
+        res.status(500).json({ error: "Failed to create subject" });
     }
 });
 
