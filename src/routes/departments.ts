@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
             })
             .from(departments)
             .where(whereClause)
-            .orderBy(desc(departments.createdAt))
+            .orderBy(desc(departments.createdAt), desc(departments.id))
             .limit(limitPerPage)
             .offset(offset);
 
