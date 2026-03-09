@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../db/index.js";
 import {departments, subjects} from "../db/schema/index.js";
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
+import {error} from "better-auth/api";
 
 const router = express.Router();
 
@@ -69,9 +70,21 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
+        const { departmentId, name, code, description } = req.body;
+
+            if (!departmentId || !name || !code) {
+            return res.status(400).json({
+                    error: "Missing required fields: departmentId, name, and code are required"
+                });
+            }
+
+            if (typeof departmentId !== 'number' || !Number.isInteger(departmentId)) {
+                return res.status(400).json({ error: "departmentId must be an integer" });
+            }
+
         const [createdSubject] = await db
             .insert(subjects)
-            .values({ ... req.body })
+            .values({ departmentId, name, code, description })
             .returning({ id: subjects.id });
 
         if (!createdSubject) {
