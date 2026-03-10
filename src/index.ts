@@ -1,6 +1,5 @@
 import AgentAPI from "apminsight";
 AgentAPI.config();
-// import 'dotenv/config';
 
 import express from 'express';
 import subjectsRouter from "./routes/subjects.js";
@@ -26,7 +25,7 @@ app.use(cors({
 }));
 
 const authHandler = toNodeHandler(auth);
-app.all('/api/auth/{*path}', (req, res) => authHandler(req, res));
+app.all('/api/auth/*', (req, res) => authHandler(req, res));
 
 app.use(express.json());
 
