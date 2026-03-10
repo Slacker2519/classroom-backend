@@ -9,7 +9,7 @@ import classesRouter from "./routes/classes.js";
 import departmentsRouter from "./routes/departments.js";
 import cors from 'cors';
 import securityMiddleware from "./middleware/security.js";
-import {toNodeHandler} from "better-auth/node";
+import {toNodeHandler, fromNodeHeaders} from "better-auth/node";
 import {auth} from "./lib/auth.js";
 
 const app = express();
@@ -25,9 +25,27 @@ app.use(cors({
   credentials: true,
 }));
 
-app.all('/api/auth/*splat', securityMiddleware, toNodeHandler(auth));
+const authHandler = toNodeHandler(auth);
+app.all('/api/auth/{*path}', (req, res) => authHandler(req, res));
 
 app.use(express.json());
+
+app.use(async (req, res, next) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+    if (session) {
+      req.user = {
+        role: session.user.role as any,
+      };
+    }
+    next();
+  } catch (e) {
+    console.error("Session middleware error:", e);
+    next();
+  }
+});
 
 app.use(securityMiddleware);
 

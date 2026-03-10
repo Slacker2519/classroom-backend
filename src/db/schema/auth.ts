@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, pgEnum, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, index, uniqueIndex, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const roleEnum = pgEnum("role", ["student", "teacher", "admin"]);
@@ -62,9 +62,41 @@ export const verification = pgTable("verification", {
     index("verification_identifier_idx").on(table.identifier),
 ]);
 
+export const apiKey = pgTable("api_key", {
+    id: text("id").primaryKey(),
+    name: text("name"),
+    start: text("start"),
+    key: text("key").notNull().unique(),
+    referenceId: text("reference_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    prefix: text("prefix"),
+    permissions: text("permissions"),
+    requestCount: integer("request_count").notNull().default(0),
+    configId: text("config_id"),
+    rateLimitEnabled: boolean("rate_limit_enabled").default(true),
+    rateLimitMax: integer("rate_limit_max"),
+    rateLimitTimeWindow: integer("rate_limit_time_window"),
+    lastRequest: timestamp("last_request"),
+    remaining: integer("remaining"),
+    refillInterval: integer("refill_interval"),
+    refillAmount: integer("refill_amount"),
+    lastRefillAt: timestamp("last_refill_at"),
+    metadata: text("metadata"),
+    enabled: boolean("enabled").default(true),
+    expiresAt: timestamp("expires_at"),
+    ...timestamps
+});
+
 export const userRelations = relations(user, ({ many }) => ({
     sessions: many(session),
     accounts: many(account),
+    apiKeys: many(apiKey),
+}));
+
+export const apiKeyRelations = relations(apiKey, ({ one }) => ({
+    user: one(user, {
+        fields: [apiKey.referenceId],
+        references: [user.id],
+    }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

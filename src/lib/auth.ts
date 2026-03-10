@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { apiKey } from "@better-auth/api-key";
 import { db } from "../db/index.js";
 import * as schema from "../db/schema/auth.js";
 
@@ -18,8 +19,16 @@ export const auth = betterAuth({
     trustedOrigins: [frontendUrl],
     database: drizzleAdapter(db, {
         provider: "pg",
-        schema,
+        schema: {
+            ...schema,
+            apikey: schema.apiKey,
+        },
     }),
+    plugins: [
+        apiKey({
+            enableSessionForAPIKeys: true,
+        }),
+    ],
     emailAndPassword: {
         enabled: true,
     },
