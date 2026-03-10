@@ -25,9 +25,28 @@ app.use(cors({
   credentials: true,
 }));
 
-app.all('/api/auth/*splat', securityMiddleware, toNodeHandler(auth));
+const authHandler = toNodeHandler(auth);
+app.all('/api/auth/{*path}', (req, res) => authHandler(req, res));
 
 app.use(express.json());
+
+// Session middleware to populate req.user for securityMiddleware
+app.use(async (req, res, next) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
+    if (session) {
+      req.user = {
+        role: session.user.role as any,
+      };
+    }
+    next();
+  } catch (e) {
+    console.error("Session middleware error:", e);
+    next();
+  }
+});
 
 app.use(securityMiddleware);
 

@@ -66,4 +66,43 @@ router.get("/", async (req, res) => {
     }
 })
 
+// Create a new user
+router.post("/", async (req, res) => {
+    try {
+        const { name, email, role, image } = req.body;
+
+        if (!name || !email || !role) {
+            return res.status(400).json({
+                error: "Missing required fields: name, email and role are required"
+            });
+        }
+
+        const userId = crypto.randomUUID();
+
+        const [createdUser] = await db
+            .insert(user)
+            .values({
+                id: userId,
+                name,
+                email,
+                role: role || "student",
+                image: image || null,
+                emailVerified: false,
+            })
+            .returning();
+
+        if (!createdUser) {
+            throw new Error("Failed to create user");
+        }
+
+        res.status(201).json({ data: createdUser });
+    } catch (e: any) {
+        console.error(`POST /users error: ${e}`);
+        if (e.code === '23505') { // Unique violation in Postgres
+            return res.status(400).json({ error: "User with this email already exists" });
+        }
+        res.status(500).json({ error: "Failed to create user" });
+    }
+});
+
 export default router;

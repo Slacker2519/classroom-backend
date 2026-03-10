@@ -76,7 +76,6 @@ router.get("/", async (req, res) => {
     }
 });
 
-// Get class details with teacher, subject, and department
 router.get('/:id', async (req, res) => {
     const classId = Number(req.params.id);
 
@@ -104,7 +103,7 @@ router.get('/:id', async (req, res) => {
     if (!classDetails) return res.status(404).json({ error: 'Class not found' });
 
     res.status(200).json({ data: classDetails });
-})
+});
 
 router.post('/', async (req, res) => {
     try {
