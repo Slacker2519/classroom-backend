@@ -65,9 +65,12 @@ export const verification = pgTable("verification", {
 export const apiKey = pgTable("api_key", {
     id: text("id").primaryKey(),
     name: text("name"),
-    startWith: text("start_with"),
+    start: text("start"),
     key: text("key").notNull().unique(),
-    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    referenceId: text("reference_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    prefix: text("prefix"),
+    permissions: text("permissions"),
+    requestCount: integer("request_count").notNull().default(0),
     configId: text("config_id"),
     rateLimitEnabled: boolean("rate_limit_enabled").default(true),
     rateLimitMax: integer("rate_limit_max"),
@@ -80,8 +83,7 @@ export const apiKey = pgTable("api_key", {
     metadata: text("metadata"),
     enabled: boolean("enabled").default(true),
     expiresAt: timestamp("expires_at"),
-    createdAt: timestamp("created_at").notNull(),
-    updatedAt: timestamp("updated_at").notNull(),
+    ...timestamps
 });
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -92,7 +94,7 @@ export const userRelations = relations(user, ({ many }) => ({
 
 export const apiKeyRelations = relations(apiKey, ({ one }) => ({
     user: one(user, {
-        fields: [apiKey.userId],
+        fields: [apiKey.referenceId],
         references: [user.id],
     }),
 }));

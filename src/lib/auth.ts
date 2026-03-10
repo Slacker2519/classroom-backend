@@ -19,7 +19,10 @@ export const auth = betterAuth({
     trustedOrigins: [frontendUrl],
     database: drizzleAdapter(db, {
         provider: "pg",
-        schema,
+        schema: {
+            ...schema,
+            apikey: schema.apiKey,
+        },
     }),
     plugins: [
         apiKey({

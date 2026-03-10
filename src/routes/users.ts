@@ -2,6 +2,8 @@ import express from "express";
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
 import {user} from "../db/schema/index.js";
 import { db } from "../db/index.js";
+import { auth } from "../lib/auth.js";
+import { fromNodeHeaders } from "better-auth/node";
 
 const router = express.Router();
 
@@ -69,39 +71,36 @@ router.get("/", async (req, res) => {
 // Create a new user
 router.post("/", async (req, res) => {
     try {
-        const { name, email, role, image } = req.body;
+        const { name, email, password, role, image } = req.body;
 
-        if (!name || !email || !role) {
+        if (!name || !email || !password || !role) {
             return res.status(400).json({
-                error: "Missing required fields: name, email and role are required"
+                error: "Missing required fields: name, email, password and role are required"
             });
         }
 
-        const userId = crypto.randomUUID();
-
-        const [createdUser] = await db
-            .insert(user)
-            .values({
-                id: userId,
-                name,
+        const signupResponse = await auth.api.signUpEmail({
+            body: {
                 email,
-                role: role || "student",
+                password,
+                name,
+                role: role,
                 image: image || null,
-                emailVerified: false,
-            })
-            .returning();
+            },
+            headers: fromNodeHeaders(req.headers),
+        });
 
-        if (!createdUser) {
-            throw new Error("Failed to create user");
+        if (!signupResponse || !signupResponse.user) {
+            throw new Error("Failed to create user account");
         }
 
-        res.status(201).json({ data: createdUser });
+        res.status(201).json({ data: signupResponse.user });
     } catch (e: any) {
         console.error(`POST /users error: ${e}`);
-        if (e.code === '23505') { // Unique violation in Postgres
-            return res.status(400).json({ error: "User with this email already exists" });
+        if (e.status === 400 || e.name === "BetterAuthError") {
+            return res.status(400).json({ error: e.message || "Failed to create user" });
         }
-        res.status(500).json({ error: "Failed to create user" });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 

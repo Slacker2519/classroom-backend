@@ -9,7 +9,7 @@ import classesRouter from "./routes/classes.js";
 import departmentsRouter from "./routes/departments.js";
 import cors from 'cors';
 import securityMiddleware from "./middleware/security.js";
-import {toNodeHandler} from "better-auth/node";
+import {toNodeHandler, fromNodeHeaders} from "better-auth/node";
 import {auth} from "./lib/auth.js";
 
 const app = express();
@@ -30,11 +30,10 @@ app.all('/api/auth/{*path}', (req, res) => authHandler(req, res));
 
 app.use(express.json());
 
-// Session middleware to populate req.user for securityMiddleware
 app.use(async (req, res, next) => {
   try {
     const session = await auth.api.getSession({
-      headers: req.headers,
+      headers: fromNodeHeaders(req.headers),
     });
     if (session) {
       req.user = {
