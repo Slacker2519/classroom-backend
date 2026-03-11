@@ -14,12 +14,15 @@ import {auth} from "./lib/auth.js";
 const app = express();
 const port = 8000;
 
-if (!process.env.FRONTEND_URL) {
+const frontendUrl = process.env.FRONTEND_URL;
+const frontendLocalUrl = process.env.FRONTEND_LOCAL_URL || 'http://localhost:5173';
+
+if (!frontendUrl) {
   throw new Error('FRONTEND_URL is not set in .env file');
 }
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [frontendUrl, frontendLocalUrl],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));

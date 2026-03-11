@@ -7,6 +7,7 @@ import * as schema from "../db/schema/auth.js";
 const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
 const betterAuthUrl = process.env.BETTER_AUTH_URL;
 const frontendUrl = process.env.FRONTEND_URL;
+const frontendLocalUrl = process.env.FRONTEND_LOCAL_URL || 'http://localhost:5173';
 
 if (!betterAuthSecret) {
     throw new Error("BETTER_AUTH_SECRET is not set");
@@ -18,7 +19,7 @@ if (!frontendUrl) {
 export const auth = betterAuth({
     baseURL: betterAuthUrl,
     secret: betterAuthSecret,
-    trustedOrigins: [frontendUrl],
+    trustedOrigins: [frontendUrl, frontendLocalUrl],
     cookiePrefix: "better-auth",
     database: drizzleAdapter(db, {
         provider: "pg",
