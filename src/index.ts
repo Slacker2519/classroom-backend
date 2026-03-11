@@ -25,7 +25,7 @@ app.use(cors({
 }));
 
 const authHandler = toNodeHandler(auth);
-app.all('/api/auth/*', (req, res) => authHandler(req, res));
+app.all('/api/auth/*splat', (req, res) => authHandler(req, res));
 
 app.use(express.json());
 
