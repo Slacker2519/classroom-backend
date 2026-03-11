@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import * as schema from "../db/schema/auth.js";
 
 const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
+const betterAuthUrl = process.env.BETTER_AUTH_URL;
 const frontendUrl = process.env.FRONTEND_URL;
 
 if (!betterAuthSecret) {
@@ -15,6 +16,7 @@ if (!frontendUrl) {
 }
 
 export const auth = betterAuth({
+    baseURL: betterAuthUrl,
     secret: betterAuthSecret,
     trustedOrigins: [frontendUrl],
     database: drizzleAdapter(db, {
