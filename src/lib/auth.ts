@@ -19,13 +19,22 @@ export const auth = betterAuth({
     baseURL: betterAuthUrl,
     secret: betterAuthSecret,
     trustedOrigins: [frontendUrl],
-    cookiePrefix: "better-auth",
     advanced: {
         cookiePrefix: "better-auth",
-    },
-    sessionCookie: {
-        sameSite: "none",
-        secure: true,
+        useSecureCookies: true,
+        defaultCookieAttributes: {
+            sameSite: "none",
+            secure: true,
+            httpOnly: true,
+        },
+        cookies: {
+            session_token: {
+                attributes: {
+                    sameSite: "none",
+                    secure: true,
+                }
+            }
+        }
     },
     database: drizzleAdapter(db, {
         provider: "pg",
