@@ -8,7 +8,7 @@ import { ac, roles } from "./access-control.js";
 
 const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
 const betterAuthUrl = process.env.BETTER_AUTH_URL;
-const frontendUrl = process.env.BETTER_AUTH_URL;
+const frontendUrl = process.env.FRONTEND_URL;
 
 if (!betterAuthSecret) {
     throw new Error("BETTER_AUTH_SECRET is not set");
