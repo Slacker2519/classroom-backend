@@ -21,7 +21,7 @@
     "@better-auth/api-key": "^1.5.4",
     "@neondatabase/serverless": "^1.0.2",
     "apminsight": "^5.3.0",
-    "better-auth": "^1.5.4",
+    "better-auth": "^1.5.5",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
