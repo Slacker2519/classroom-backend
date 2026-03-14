@@ -1,5 +1,5 @@
 import express from "express";
-import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
+import {and, desc, eq, getTableColumns, ilike, inArray, or, sql} from "drizzle-orm";
 import {user} from "../db/schema/index.js";
 import { db } from "../db/index.js";
 import { auth } from "../lib/auth.js";
@@ -13,6 +13,7 @@ const userReadPermission = requirePermission({ profile: ["read"] });
 const userCreatePermission = requirePermission({ profile: ["create"] });
 
 // Get all users with optional search, filtering and pagination
+// Results are scoped to the caller's active organization
 router.get("/", userReadPermission, async (req, res) => {
     try {
         const { search, role, page = 1, limit = 10 } = req.query;
@@ -22,7 +23,51 @@ router.get("/", userReadPermission, async (req, res) => {
 
         const offset = (currentPage - 1) * limitPerPage;
 
+        // Get the current session to find the active organization
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
+
+        if (!session || !session.session) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        // Get members of the active organization to scope results
+        let orgMemberUserIds: string[] = [];
+        
+        if (session.session.activeOrganizationId) {
+            try {
+                const authApi = auth.api as any;
+                const membersResponse = await authApi.listMembers({
+                    headers: fromNodeHeaders(req.headers),
+                    query: { organizationId: session.session.activeOrganizationId }
+                });
+                
+                if (membersResponse?.members) {
+                    orgMemberUserIds = membersResponse.members.map((m: any) => m.userId);
+                }
+            } catch (e) {
+                console.error("Error fetching organization members:", e);
+            }
+        }
+
+        // If no organization or no members found, return empty result
+        if (orgMemberUserIds.length === 0) {
+            return res.status(200).json({
+                data: [],
+                pagination: {
+                    page: currentPage,
+                    limit: limitPerPage,
+                    total: 0,
+                    totalPages: 0,
+                }
+            });
+        }
+
         const filterConditions = [];
+
+        // Filter to only organization members
+        filterConditions.push(inArray(user.id, orgMemberUserIds));
 
         // If a search query exists, filter by user name OR email
         if (search) {

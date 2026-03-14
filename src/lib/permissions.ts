@@ -25,6 +25,28 @@ interface PermissionCheckOptions {
 }
 
 /**
+ * Get the current user's membership record in the active organization
+ */
+async function getActiveMember(organizationId: string, headers: any) {
+    const authApi = auth.api as any;
+    // Use listMembers to find the current user's membership
+    const membersResponse = await authApi.listMembers({
+        headers,
+        query: { organizationId }
+    });
+    
+    // Find the current user's membership
+    if (membersResponse?.members) {
+        const currentUserId = (await auth.api.getSession({ headers }))?.user?.id;
+        const membership = membersResponse.members.find(
+            (m: any) => m.userId === currentUserId
+        );
+        return membership;
+    }
+    return null;
+}
+
+/**
  * Check if the current request has the required permission
  * 
  * @param req - Express request object
@@ -44,24 +66,22 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
         // If user has an active organization, check organization-level permissions
         if (session.session.activeOrganizationId) {
             try {
-                // Get member info to check role - use type assertion for auth.api
+                const headers = fromNodeHeaders(req.headers);
                 const authApi = auth.api as any;
-                const memberResponse = await authApi.getMember({
-                    headers: fromNodeHeaders(req.headers),
-                    params: {
-                        organizationId: session.session.activeOrganizationId,
-                        memberId: session.user.id,
-                    }
-                });
+                
+                // Get the user's membership record in this organization
+                const membership = await getActiveMember(
+                    session.session.activeOrganizationId,
+                    headers
+                );
 
-                if (memberResponse?.member) {
-                    const role = memberResponse.member.role;
+                if (membership) {
+                    const role = membership.role;
                     
                     // Get the access control from auth options
-                    const ac = (auth as any).options?.plugins?.[0]?.ac;
                     const roles = (auth as any).options?.plugins?.[0]?.roles;
                     
-                    if (ac && roles && role) {
+                    if (roles && role) {
                         const roleDef = roles[role];
                         if (roleDef) {
                             // Check if role has the required permission
@@ -156,17 +176,16 @@ export async function getUserRole(req: Request): Promise<string | null> {
         // If user has an active organization, get their role from the membership
         if (session.session.activeOrganizationId) {
             try {
-                const authApi = auth.api as any;
-                const member = await authApi.getMember({
-                    headers: fromNodeHeaders(req.headers),
-                    params: {
-                        organizationId: session.session.activeOrganizationId,
-                        memberId: session.user.id,
-                    }
-                });
+                const headers = fromNodeHeaders(req.headers);
                 
-                if (member?.member) {
-                    return member.member.role;
+                // Get the user's membership record
+                const membership = await getActiveMember(
+                    session.session.activeOrganizationId,
+                    headers
+                );
+                
+                if (membership) {
+                    return membership.role;
                 }
             } catch (e) {
                 console.error("Error getting member:", e);
