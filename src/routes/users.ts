@@ -48,6 +48,9 @@ router.get("/", userReadPermission, async (req, res) => {
                 }
             } catch (e) {
                 console.error("Error fetching organization members:", e);
+                return res.status(500).json({
+                    error: "Failed to resolve organization members",
+                });
             }
         }
 

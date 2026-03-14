@@ -8,6 +8,7 @@
 import { auth } from "./auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Request, Response, NextFunction } from "express";
+import {error} from "better-auth/api";
 
 /**
  * Permission type - matches the permission structure in access-control.ts
@@ -84,9 +85,10 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                     if (roles && role) {
                         const roleDef = roles[role];
                         if (roleDef) {
-                            // Check if role has the required permission
                             const result = roleDef.authorize(options.permissions);
-                            return result.success;
+                            if (result.success) {
+                                return true;
+                            }
                         }
                     }
                     
