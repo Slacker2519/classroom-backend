@@ -3,10 +3,15 @@ import { db } from "../db/index.js";
 import {classes, departments, subjects} from "../db/schema/index.js";
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
 import {user} from "../db/schema/auth.js";
+import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+// Permission middleware for class routes
+const classReadPermission = requirePermission({ class: ["read"] });
+const classCreatePermission = requirePermission({ class: ["create"] });
+
+router.get("/", classReadPermission, async (req, res) => {
     try {
         const { search, subject, teacher, page = 1, limit = 10 } = req.query;
 
@@ -76,7 +81,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', classReadPermission, async (req, res) => {
     const classId = Number(req.params.id);
 
     if (!Number.isFinite(classId)) return res.status(400).json( { error: 'No Class found.' });
@@ -105,7 +110,7 @@ router.get('/:id', async (req, res) => {
     res.status(200).json({ data: classDetails });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', classCreatePermission, async (req, res) => {
     try {
         const [createdClass] = await db
             .insert(classes)

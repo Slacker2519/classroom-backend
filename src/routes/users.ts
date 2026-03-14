@@ -4,11 +4,16 @@ import {user} from "../db/schema/index.js";
 import { db } from "../db/index.js";
 import { auth } from "../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
+import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
+// Permission middleware for user routes
+const userReadPermission = requirePermission({ profile: ["read"] });
+const userCreatePermission = requirePermission({ profile: ["create"] });
+
 // Get all users with optional search, filtering and pagination
-router.get("/", async (req, res) => {
+router.get("/", userReadPermission, async (req, res) => {
     try {
         const { search, role, page = 1, limit = 10 } = req.query;
 
@@ -69,7 +74,7 @@ router.get("/", async (req, res) => {
 })
 
 // Create a new user
-router.post("/", async (req, res) => {
+router.post("/", userCreatePermission, async (req, res) => {
     try {
         const { name, email, password, role, image } = req.body;
 
