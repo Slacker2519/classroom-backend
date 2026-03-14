@@ -25,7 +25,7 @@ async function sendInvitationEmail(data: {
     email: string;
     id: string;
     inviter: { user: { name: string; email: string } };
-    organization: { name: string; logo?: string };
+    organization: { name: string; logo?: string | null };
 }) {
     const inviteLink = `${frontendUrl}/accept-invitation/${data.id}`;
     
@@ -79,15 +79,12 @@ export const auth = betterAuth({
             async sendInvitationEmail(data) {
                 await sendInvitationEmail(data);
             },
-            // Set the creator role to admin (instead of owner)
-            // This means the user who creates the organization gets admin role
             creatorRole: "admin",
-            // Limit membership to 100 per organization (default)
             membershipLimit: 100,
         }),
         apiKey({
             enableSessionForAPIKeys: true,
-        }),
+        }) as any,
     ],
     emailAndPassword: {
         enabled: true
