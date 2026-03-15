@@ -48,6 +48,23 @@ async function getActiveMember(organizationId: string, headers: any) {
 }
 
 /**
+ * Get the organization roles from the auth instance by dynamically finding the plugin
+ * This avoids hardcoding the plugin index
+ */
+function getOrgRoles(authInstance: any) {
+    const plugins = authInstance.options?.plugins;
+    if (!plugins) return null;
+    
+    // Find the plugin that has roles defined (organization plugin)
+    for (const plugin of plugins) {
+        if (plugin?.roles) {
+            return plugin.roles;
+        }
+    }
+    return null;
+}
+
+/**
  * Check if the current request has the required permission
  * 
  * @param req - Express request object
@@ -79,8 +96,8 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                 if (membership) {
                     const role = membership.role;
                     
-                    // Get the access control from auth options
-                    const roles = (auth as any).options?.plugins?.[0]?.roles;
+                    // Get the access control from auth options - find dynamically
+                    const roles = getOrgRoles(auth);
                     
                     if (roles && role) {
                         const roleDef = roles[role];

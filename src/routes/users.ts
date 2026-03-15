@@ -132,6 +132,12 @@ router.post("/", userCreatePermission, async (req, res) => {
             });
         }
 
+        if (role === "admin") {
+            return res.status(403).json({
+                error: "This endpoint cannot assign the global admin role",
+            });
+        }
+
         const signupResponse = await auth.api.signUpEmail({
             body: {
                 email,
