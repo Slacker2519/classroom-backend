@@ -2,10 +2,14 @@ import express from "express";
 import { db } from "../db/index.js";
 import {departments, subjects} from "../db/schema/index.js";
 import { and, desc, getTableColumns, ilike, sql } from "drizzle-orm";
+import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+// Permission middleware for department routes
+const departmentReadPermission = requirePermission({ department: ["read"] });
+
+router.get("/", departmentReadPermission, async (req, res) => {
     try {
         const { search, subject, page = 1, limit = 10 } = req.query;
 

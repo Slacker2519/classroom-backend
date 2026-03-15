@@ -3,10 +3,15 @@ import { db } from "../db/index.js";
 import {departments, subjects} from "../db/schema/index.js";
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
 import {error} from "better-auth/api";
+import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+// Permission middleware for subject routes
+const subjectReadPermission = requirePermission({ subject: ["read"] });
+const subjectCreatePermission = requirePermission({ subject: ["create"] });
+
+router.get("/", subjectReadPermission, async (req, res) => {
     try {
         const { search, department, page = 1, limit = 10 } = req.query;
 
@@ -68,7 +73,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", subjectCreatePermission, async (req, res) => {
     try {
         const { departmentId, name, code, description } = req.body;
 
