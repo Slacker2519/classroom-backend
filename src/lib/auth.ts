@@ -21,7 +21,7 @@ async function sendInvitationEmail(data: {
     email: string;
     id: string;
     inviter: { user: { name: string; email: string } };
-    organization: { name: string; logo?: string | null };
+    organization: { name: string; logo?: string | null | undefined };
 }) {
     const inviteLink = `${frontendUrl}/accept-invitation/${data.id}`;
     
