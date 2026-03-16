@@ -1,42 +1,22 @@
-/**
- * Permission Middleware for API Routes
- * 
- * This middleware provides role-based access control for API routes.
- * It integrates with the access-control setup in access-control.ts.
- */
-
 import { auth } from "./auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Request, Response, NextFunction } from "express";
 import {error} from "better-auth/api";
 
-/**
- * Permission type - matches the permission structure in access-control.ts
- */
 type Permission = Record<string, string[]>;
 
-/**
- * Options for permission check
- */
 interface PermissionCheckOptions {
-    /** The permission to check (e.g., { class: ["create"] }) */
     permissions: Permission;
-    /** Whether to allow the organization creator (owner) to have all permissions */
     allowCreatorAllPermissions?: boolean;
 }
 
-/**
- * Get the current user's membership record in the active organization
- */
 async function getActiveMember(organizationId: string, headers: any) {
     const authApi = auth.api as any;
-    // Use listMembers to find the current user's membership
     const membersResponse = await authApi.listMembers({
         headers,
         query: { organizationId }
     });
     
-    // Find the current user's membership
     if (membersResponse?.members) {
         const currentUserId = (await auth.api.getSession({ headers }))?.user?.id;
         const membership = membersResponse.members.find(
@@ -47,15 +27,10 @@ async function getActiveMember(organizationId: string, headers: any) {
     return null;
 }
 
-/**
- * Get the organization roles from the auth instance by dynamically finding the plugin
- * This avoids hardcoding the plugin index
- */
 function getOrgRoles(authInstance: any) {
     const plugins = authInstance.options?.plugins;
     if (!plugins) return null;
     
-    // Find the plugin that has roles defined (organization plugin)
     for (const plugin of plugins) {
         if (plugin?.roles) {
             return plugin.roles;
@@ -64,13 +39,6 @@ function getOrgRoles(authInstance: any) {
     return null;
 }
 
-/**
- * Check if the current request has the required permission
- * 
- * @param req - Express request object
- * @param options - Permission check options
- * @returns Promise<boolean> - True if user has permission
- */
 async function checkPermission(req: Request, options: PermissionCheckOptions): Promise<boolean> {
     try {
         const session = await auth.api.getSession({
@@ -81,13 +49,11 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
             return false;
         }
 
-        // If user has an active organization, check organization-level permissions
         if (session.session.activeOrganizationId) {
             try {
                 const headers = fromNodeHeaders(req.headers);
                 const authApi = auth.api as any;
                 
-                // Get the user's membership record in this organization
                 const membership = await getActiveMember(
                     session.session.activeOrganizationId,
                     headers
@@ -96,7 +62,6 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                 if (membership) {
                     const role = membership.role;
                     
-                    // Get the access control from auth options - find dynamically
                     const roles = getOrgRoles(auth);
                     
                     if (roles && role) {
@@ -109,7 +74,6 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                         }
                     }
                     
-                    // Owner/admin always has access
                     if (options.allowCreatorAllPermissions && role === "admin") {
                         return true;
                     }
@@ -119,7 +83,6 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
             }
         }
 
-        // If no active organization, check if user is admin
         const userRole = (session.user as any).role;
         if (userRole === "admin") {
             return true;
@@ -132,16 +95,6 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
     }
 }
 
-/**
- * Express middleware to require specific permissions
- * 
- * @param permissions - The permissions required to access the route
- * @param allowCreatorAllPermissions - Whether to allow organization creator full access
- * 
- * @example
- * // Require class:create permission
- * router.post("/", requirePermission({ class: ["create"] }), createClass);
- */
 export function requirePermission(
     permissions: Permission,
     allowCreatorAllPermissions: boolean = true
@@ -163,11 +116,6 @@ export function requirePermission(
     };
 }
 
-/**
- * Optional permission check - adds permission info to request but doesn't block
- * 
- * @param permissions - The permissions to check
- */
 export function checkOptionalPermission(permissions: Permission) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const hasAccess = await checkPermission(req, { permissions });
@@ -176,12 +124,6 @@ export function checkOptionalPermission(permissions: Permission) {
     };
 }
 
-/**
- * Get current user's role in the active organization
- * 
- * @param req - Express request object
- * @returns The role name or null if not found
- */
 export async function getUserRole(req: Request): Promise<string | null> {
     try {
         const session = await auth.api.getSession({
@@ -192,12 +134,10 @@ export async function getUserRole(req: Request): Promise<string | null> {
             return null;
         }
 
-        // If user has an active organization, get their role from the membership
         if (session.session.activeOrganizationId) {
             try {
                 const headers = fromNodeHeaders(req.headers);
                 
-                // Get the user's membership record
                 const membership = await getActiveMember(
                     session.session.activeOrganizationId,
                     headers
@@ -211,7 +151,6 @@ export async function getUserRole(req: Request): Promise<string | null> {
             }
         }
 
-        // Fallback to user role
         return (session.user as any).role || null;
     } catch (error) {
         console.error("Get user role error:", error);

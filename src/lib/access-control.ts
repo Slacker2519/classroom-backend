@@ -1,24 +1,9 @@
-/**
- * Access Control Configuration for Classroom App
- * 
- * Roles:
- * - admin: Full access to everything
- * - teacher: CRUD on own classes, CRUD on own profile, read on subjects/departments/students
- * - student: CRUD on own profile, read on classes/subjects/departments, join class via invite
- */
-
 import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements, adminAc, memberAc } from "better-auth/plugins/organization/access";
 
-/**
- * Define permission statements for all resources in the app
- * Each key is a resource, and the value is an array of allowed actions
- */
 const statements = {
-  // Include default organization statements and add custom ones
   ...defaultStatements,
   
-  // Custom resources for classroom app
   class: ["create", "read", "update", "delete", "join"],
   subject: ["create", "read", "update", "delete"],
   department: ["create", "read", "update", "delete"],
@@ -28,19 +13,10 @@ const statements = {
   invitation: ["create", "cancel", "read"],
 } as const;
 
-/**
- * Create the access control instance
- */
 export const ac = createAccessControl(statements);
 
-/**
- * Admin role - Full access to everything
- * Uses adminAc.statements from better-auth + custom permissions
- */
 export const adminRole = ac.newRole({
-  // Include default admin permissions
   ...adminAc.statements,
-  // Full access to all custom resources
   class: ["create", "read", "update", "delete", "join"],
   subject: ["create", "read", "update", "delete"],
   department: ["create", "read", "update", "delete"],
@@ -50,13 +26,6 @@ export const adminRole = ac.newRole({
   invitation: ["create", "cancel", "read"],
 });
 
-/**
- * Teacher role:
- * - Can CRUD classes they create (own classes)
- * - Can CRUD their own profile
- * - Can read subjects, departments, students
- * - Can create invitations to invite students
- */
 export const teacherRole = ac.newRole({
   // Include basic member permissions
   ...memberAc.statements,

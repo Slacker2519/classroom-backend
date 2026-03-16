@@ -1,18 +1,3 @@
-/**
- * Seed Script for Classroom App
- * 
- * This script creates:
- * - 1 admin account
- * - 3 teacher accounts
- * - 5 student accounts
- * - 2 departments
- * - 6 subjects
- * 
- * Note: Organization creation is skipped - users can create org via UI
- * 
- * Run with: npx tsx src/lib/seed.ts
- */
-
 import { auth } from "./auth.js";
 import { db } from "../db/index.js";
 import { departments, subjects, user } from "../db/schema/index.js";
@@ -51,10 +36,6 @@ const SEED_DATA = {
     ],
 };
 
-/**
- * Check if seed has already been run
- * We check by looking for the admin user
- */
 async function isAlreadySeeded(): Promise<boolean> {
     const existingAdmin = await db
         .select()
@@ -64,9 +45,6 @@ async function isAlreadySeeded(): Promise<boolean> {
     return existingAdmin.length > 0;
 }
 
-/**
- * Create a user via better-auth API
- */
 async function createUser(
     email: string, 
     name: string, 
@@ -107,9 +85,6 @@ async function createUser(
     }
 }
 
-/**
- * Create department
- */
 async function createDepartment(
     code: string, 
     name: string, 
@@ -136,20 +111,15 @@ async function createDepartment(
         throw new Error(`Failed to create department: ${name}`);
     }
     
-    console.log(`✓ Created department: ${name} (${code})`);
     return { id: dept.id };
 }
 
-/**
- * Create subject
- */
 async function createSubject(
     code: string, 
     name: string, 
     departmentId: number,
     description?: string
 ): Promise<{ id: number }> {
-    // Check if exists
     const existing = await db
         .select()
         .from(subjects)
@@ -170,18 +140,10 @@ async function createSubject(
         throw new Error(`Failed to create subject: ${name}`);
     }
     
-    console.log(`✓ Created subject: ${name} (${code})`);
     return { id: subject.id };
 }
 
-/**
- * Main seed function
- */
 export async function seed(): Promise<void> {
-    console.log("=== Starting Seed ===\n");
-    console.log("Note: Organization creation skipped - create via UI after login\n");
-    
-    // Check if already seeded
     const alreadySeeded = await isAlreadySeeded();
     if (alreadySeeded) {
         console.log("⚠ Seed has already been run. Skipping...");
@@ -189,7 +151,6 @@ export async function seed(): Promise<void> {
     }
     
     try {
-        // Step 1: Create admin user
         console.log("--- Step 1: Creating Admin ---");
         await createUser(
             SEED_DATA.admin.email,
@@ -198,28 +159,20 @@ export async function seed(): Promise<void> {
             "admin"
         );
         
-        // Step 2: Create teachers
-        console.log("\n--- Step 2: Creating Teachers ---");
         for (const t of SEED_DATA.teachers) {
             await createUser(t.email, t.name, t.password, "teacher");
         }
         
-        // Step 3: Create students
-        console.log("\n--- Step 3: Creating Students ---");
         for (const s of SEED_DATA.students) {
             await createUser(s.email, s.name, s.password, "student");
         }
         
-        // Step 4: Create departments
-        console.log("\n--- Step 4: Creating Departments ---");
         const deptMap: Record<string, number> = {};
         for (const d of SEED_DATA.departments) {
             const dept = await createDepartment(d.code, d.name, d.description);
             deptMap[d.code] = dept.id;
         }
         
-        // Step 5: Create subjects
-        console.log("\n--- Step 5: Creating Subjects ---");
         for (const s of SEED_DATA.subjects) {
             const deptId = deptMap[s.deptCode];
             if (!deptId) {
@@ -227,19 +180,6 @@ export async function seed(): Promise<void> {
             }
             await createSubject(s.code, s.name, deptId, s.description);
         }
-        
-        console.log("\n=== Seed Complete! ===");
-        console.log("\nLogin credentials:");
-        console.log(`Admin: ${SEED_DATA.admin.email} / ${SEED_DATA.admin.password}`);
-        console.log(`Teacher 1: ${SEED_DATA.teachers[0]?.email ?? ''} / ${SEED_DATA.teachers[0]?.password ?? ''}`);
-        console.log(`Teacher 2: ${SEED_DATA.teachers[1]?.email ?? ''} / ${SEED_DATA.teachers[1]?.password ?? ''}`);
-        console.log(`Teacher 3: ${SEED_DATA.teachers[2]?.email ?? ''} / ${SEED_DATA.teachers[2]?.password ?? ''}`);
-        console.log(`Student 1: ${SEED_DATA.students[0]?.email ?? ''} / ${SEED_DATA.students[0]?.password ?? ''}`);
-        console.log(`Student 2: ${SEED_DATA.students[1]?.email ?? ''} / ${SEED_DATA.students[1]?.password ?? ''}`);
-        console.log(`Student 3: ${SEED_DATA.students[2]?.email ?? ''} / ${SEED_DATA.students[2]?.password ?? ''}`);
-        console.log(`Student 4: ${SEED_DATA.students[3]?.email ?? ''} / ${SEED_DATA.students[3]?.password ?? ''}`);
-        console.log(`Student 5: ${SEED_DATA.students[4]?.email ?? ''} / ${SEED_DATA.students[4]?.password ?? ''}`);
-        console.log("\n⚠ Important: After logging in, create an organization in the UI to enable RBAC features.");
         
     } catch (error) {
         console.error("\n❌ Seed failed:", error);

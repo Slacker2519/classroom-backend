@@ -17,10 +17,6 @@ if (!frontendUrl) {
     throw new Error("FRONTEND_URL is not set");
 }
 
-/**
- * Send organization invitation email
- * This is a placeholder - implement your actual email sending logic
- */
 async function sendInvitationEmail(data: {
     email: string;
     id: string;
@@ -29,15 +25,8 @@ async function sendInvitationEmail(data: {
 }) {
     const inviteLink = `${frontendUrl}/accept-invitation/${data.id}`;
     
-    // TODO: Implement your email sending logic here
-    // Example: await sendEmail({
-    //   to: data.email,
-    //   subject: `Invitation to join ${data.organization.name}`,
-    //   html: `<p>You have been invited by ${data.inviter.user.name} to join ${data.organization.name}. <a href="${inviteLink}">Accept Invitation</a></p>`
-    // });
-    
-    console.log(`[DEBUG] Invitation email would be sent to: ${data.email}`);
-    console.log(`[DEBUG] Invite link: ${inviteLink}`);
+    // console.log(`[DEBUG] Invitation email would be sent to: ${data.email}`);
+    // console.log(`[DEBUG] Invite link: ${inviteLink}`);
 }
 
 export const auth = betterAuth({
@@ -80,7 +69,6 @@ export const auth = betterAuth({
                 await sendInvitationEmail(data);
             },
             creatorRole: "admin",
-            membershipLimit: 100,
         }),
         apiKey({
             enableSessionForAPIKeys: true,
