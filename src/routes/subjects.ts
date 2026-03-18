@@ -2,12 +2,10 @@ import express from "express";
 import { db } from "../db/index.js";
 import {departments, subjects} from "../db/schema/index.js";
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
-import {error} from "better-auth/api";
 import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
-// Permission middleware for subject routes
 const subjectReadPermission = requirePermission({ subject: ["read"] });
 const subjectCreatePermission = requirePermission({ subject: ["create"] });
 
@@ -16,7 +14,7 @@ router.get("/", subjectReadPermission, async (req, res) => {
         const { search, department, page = 1, limit = 10 } = req.query;
 
         const currentPage = Math.max(1, parseInt(String(page), 10) || 1);
-        const limitPerPage = Math.min(Math.max(1, parseInt(String(limit), 10) || 10), 100); // Max 100 records per page
+        const limitPerPage = Math.min(Math.max(1, parseInt(String(limit), 10) || 10), 100);
 
         const offset = (currentPage - 1) * limitPerPage;
 
@@ -77,15 +75,15 @@ router.post("/", subjectCreatePermission, async (req, res) => {
     try {
         const { departmentId, name, code, description } = req.body;
 
-            if (!departmentId || !name || !code) {
+        if (!departmentId || !name || !code) {
             return res.status(400).json({
-                    error: "Missing required fields: departmentId, name, and code are required"
-                });
-            }
+                error: "Missing required fields: departmentId, name, and code are required"
+            });
+        }
 
-            if (typeof departmentId !== 'number' || !Number.isInteger(departmentId)) {
-                return res.status(400).json({ error: "departmentId must be an integer" });
-            }
+        if (typeof departmentId !== 'number' || !Number.isInteger(departmentId)) {
+            return res.status(400).json({ error: "departmentId must be an integer" });
+        }
 
         const [createdSubject] = await db
             .insert(subjects)

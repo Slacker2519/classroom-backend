@@ -24,9 +24,6 @@ async function sendInvitationEmail(data: {
     organization: { name: string; logo?: string | null | undefined };
 }) {
     const inviteLink = `${frontendUrl}/accept-invitation/${data.id}`;
-    
-    // console.log(`[DEBUG] Invitation email would be sent to: ${data.email}`);
-    // console.log(`[DEBUG] Invite link: ${inviteLink}`);
 }
 
 export const auth = betterAuth({
@@ -35,17 +32,15 @@ export const auth = betterAuth({
     trustedOrigins: [frontendUrl],
     advanced: {
         cookiePrefix: "better-auth",
-        useSecureCookies: true,
         defaultCookieAttributes: {
-            sameSite: "none",
-            secure: true,
-            httpOnly: true,
+            sameSite: "lax",
+            secure: false,
         },
         cookies: {
             session_token: {
                 attributes: {
-                    sameSite: "none",
-                    secure: true,
+                    sameSite: "lax",
+                    secure: false,
                 }
             }
         }

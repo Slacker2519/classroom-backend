@@ -46,8 +46,12 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
         });
 
         if (!session || !session.session) {
+            console.log("[DEBUG] No session found");
             return false;
         }
+
+        console.log("[DEBUG] Session user:", session.user?.email);
+        console.log("[DEBUG] Active organization:", session.session.activeOrganizationId);
 
         if (session.session.activeOrganizationId) {
             try {
@@ -59,8 +63,11 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                     headers
                 );
 
+                console.log("[DEBUG] Membership:", membership);
+
                 if (membership) {
                     const role = membership.role;
+                    console.log("[DEBUG] Member role:", role);
                     
                     const roles = getOrgRoles(auth);
                     
@@ -68,6 +75,7 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
                         const roleDef = roles[role];
                         if (roleDef) {
                             const result = roleDef.authorize(options.permissions);
+                            console.log("[DEBUG] Authorization result:", result);
                             if (result.success) {
                                 return true;
                             }
@@ -81,9 +89,13 @@ async function checkPermission(req: Request, options: PermissionCheckOptions): P
             } catch (e) {
                 console.error("Error checking member permissions:", e);
             }
+        } else {
+            console.log("[DEBUG] No active organization - checking user role fallback");
         }
 
         const userRole = (session.user as any).role;
+        console.log("[DEBUG] User role (fallback):", userRole);
+        
         if (userRole === "admin") {
             return true;
         }
