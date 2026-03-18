@@ -13,17 +13,11 @@ const frontendUrl = process.env.FRONTEND_URL;
 if (!betterAuthSecret) {
     throw new Error("BETTER_AUTH_SECRET is not set");
 }
+if (!betterAuthUrl) {
+    throw new Error("BETTER_AUTH_URL is not set");
+}
 if (!frontendUrl) {
     throw new Error("FRONTEND_URL is not set");
-}
-
-async function sendInvitationEmail(data: {
-    email: string;
-    id: string;
-    inviter: { user: { name: string; email: string } };
-    organization: { name: string; logo?: string | null | undefined };
-}) {
-    const inviteLink = `${frontendUrl}/accept-invitation/${data.id}`;
 }
 
 export const auth = betterAuth({
@@ -52,14 +46,11 @@ export const auth = betterAuth({
                 teacher: roles.teacher,
                 student: roles.student,
             },
-            async sendInvitationEmail(data) {
-                await sendInvitationEmail(data);
-            },
             creatorRole: "admin",
         }),
         apiKey({
             enableSessionForAPIKeys: true,
-        }) as any,
+        }),
     ],
     emailAndPassword: {
         enabled: true
