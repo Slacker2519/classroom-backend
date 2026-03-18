@@ -33,17 +33,9 @@ export const auth = betterAuth({
     advanced: {
         cookiePrefix: "better-auth",
         defaultCookieAttributes: {
-            sameSite: "lax",
-            secure: false,
+            sameSite: "none",
+            secure: true,
         },
-        cookies: {
-            session_token: {
-                attributes: {
-                    sameSite: "lax",
-                    secure: false,
-                }
-            }
-        }
     },
     database: drizzleAdapter(db, {
         provider: "pg",
