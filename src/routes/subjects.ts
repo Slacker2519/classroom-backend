@@ -71,7 +71,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", subjectCreatePermission, async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const { departmentId, name, code, description } = req.body;
 
