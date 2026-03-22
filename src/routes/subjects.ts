@@ -9,7 +9,7 @@ const router = express.Router();
 const subjectReadPermission = requirePermission({ subject: ["read"] });
 const subjectCreatePermission = requirePermission({ subject: ["create"] });
 
-router.get("/", subjectReadPermission, async (req, res) => {
+router.get("/", async (req, res) => {
     try {
         const { search, department, page = 1, limit = 10 } = req.query;
 
