@@ -34,6 +34,7 @@ export const teacherRole = ac.newRole({
   profile: ["create", "read", "update", "delete"],
   student: ["read"],
   invitation: ["create", "read"],
+  teacher: ["read"],
 });
 
 export const studentRole = ac.newRole({
