@@ -11,7 +11,7 @@ const router = express.Router();
 const classReadPermission = requirePermission({ class: ["read"] });
 const classCreatePermission = requirePermission({ class: ["create"] });
 
-router.get("/", async (req, res) => {
+router.get("/", classReadPermission, async (req, res) => {
     try {
         const { search, subject, teacher, page = 1, limit = 10 } = req.query;
 
@@ -81,7 +81,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', classReadPermission, async (req, res) => {
     const classId = Number(req.params.id);
 
     if (!Number.isFinite(classId)) return res.status(400).json( { error: 'No Class found.' });

@@ -11,7 +11,7 @@ const router = express.Router();
 const userReadPermission = requirePermission({ profile: ["read"] });
 const userCreatePermission = requirePermission({ profile: ["create"] });
 
-router.get("/", async (req, res) => {
+router.get("/", userReadPermission, async (req, res) => {
     try {
         const { search, role, page = 1, limit = 10 } = req.query;
 
@@ -118,8 +118,7 @@ router.get("/", async (req, res) => {
     }
 })
 
-// Create a new user
-router.post("/", async (req, res) => {
+router.post("/", userCreatePermission, async (req, res) => {
     try {
         const { name, email, password, role, image } = req.body;
 

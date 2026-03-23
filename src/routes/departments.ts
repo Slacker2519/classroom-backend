@@ -6,7 +6,6 @@ import { requirePermission } from "../lib/permissions.js";
 
 const router = express.Router();
 
-// Permission middleware for department routes
 const departmentReadPermission = requirePermission({ department: ["read"] });
 
 router.get("/", departmentReadPermission, async (req, res) => {
