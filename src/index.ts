@@ -72,6 +72,5 @@ app.get("/api/debug/session", async (req, res) => {
   res.json({
     userId: session?.user?.id,
     role: (session?.user as any)?.role,
-    activeOrganizationId: session?.session?.activeOrganizationId,
   });
 });

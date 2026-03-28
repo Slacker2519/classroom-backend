@@ -1,171 +1,72 @@
 import { auth } from "./auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Request, Response, NextFunction } from "express";
-import {error} from "better-auth/api";
+import { ROLE_PERMISSIONS } from "./role-permissions.js";
 
 type Permission = Record<string, string[]>;
 
 interface PermissionCheckOptions {
-    permissions: Permission;
-    allowCreatorAllPermissions?: boolean;
+  permissions: Permission;
 }
 
-async function getActiveMember(organizationId: string, headers: any) {
-    const authApi = auth.api as any;
-    const membersResponse = await authApi.listMembers({
-        headers,
-        query: { organizationId }
-    });
-    
-    if (membersResponse?.members) {
-        const currentUserId = (await auth.api.getSession({ headers }))?.user?.id;
-        const membership = membersResponse.members.find(
-            (m: any) => m.userId === currentUserId
-        );
-        return membership;
+async function checkPermission(
+  req: Request,
+  options: PermissionCheckOptions,
+): Promise<boolean> {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+
+  if (!session || !session.session) return false;
+
+  const userRole = (session.user as any).role as keyof typeof ROLE_PERMISSIONS;
+  const permissions = ROLE_PERMISSIONS[userRole];
+
+  if (!permissions) return false;
+
+  const required = options.permissions;
+  for (const [resource, actions] of Object.entries(required)) {
+    const allowed = permissions[resource] || [];
+    const hasAllActions = actions.every((action) => allowed.includes(action));
+    if (!hasAllActions) return false;
+  }
+
+  return true;
+}
+
+export function requirePermission(permissions: Permission) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const hasAccess = await checkPermission(req, { permissions });
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: "FORBIDDEN",
+        message: "You don't have permission to perform this action",
+      });
     }
-    return null;
-}
 
-function getOrgRoles(authInstance: any) {
-    const plugins = authInstance.options?.plugins;
-    if (!plugins) return null;
-    
-    for (const plugin of plugins) {
-        if (plugin?.roles) {
-            return plugin.roles;
-        }
-    }
-    return null;
-}
-
-async function checkPermission(req: Request, options: PermissionCheckOptions): Promise<boolean> {
-    try {
-        const session = await auth.api.getSession({
-            headers: fromNodeHeaders(req.headers),
-        });
-
-        if (!session || !session.session) {
-            console.log("[DEBUG] No session found");
-            return false;
-        }
-
-        console.log("[DEBUG] Session user:", session.user?.email);
-        console.log("[DEBUG] Active organization:", session.session.activeOrganizationId);
-
-        if (session.session.activeOrganizationId) {
-            try {
-                const headers = fromNodeHeaders(req.headers);
-                const authApi = auth.api as any;
-                
-                const membership = await getActiveMember(
-                    session.session.activeOrganizationId,
-                    headers
-                );
-
-                console.log("[DEBUG] Membership:", membership);
-
-                if (membership) {
-                    const role = membership.role;
-                    console.log("[DEBUG] Member role:", role);
-                    
-                    const roles = getOrgRoles(auth);
-                    
-                    if (roles && role) {
-                        const roleDef = roles[role];
-                        if (roleDef) {
-                            const result = roleDef.authorize(options.permissions);
-                            console.log("[DEBUG] Authorization result:", result);
-                            if (result.success) {
-                                return true;
-                            }
-                        }
-                    }
-                    
-                    if (options.allowCreatorAllPermissions && role === "admin") {
-                        return true;
-                    }
-                }
-            } catch (e) {
-                console.error("Error checking member permissions:", e);
-            }
-        } else {
-            console.log("[DEBUG] No active organization - checking user role fallback");
-        }
-
-        const userRole = (session.user as any).role;
-        console.log("[DEBUG] User role (fallback):", userRole);
-        
-        if (userRole === "admin") {
-            return true;
-        }
-
-        return false;
-    } catch (error) {
-        console.error("Permission check error:", error);
-        return false;
-    }
-}
-
-export function requirePermission(
-    permissions: Permission,
-    allowCreatorAllPermissions: boolean = true
-) {
-    return async (req: Request, res: Response, next: NextFunction) => {
-        const hasAccess = await checkPermission(req, {
-            permissions,
-            allowCreatorAllPermissions,
-        });
-
-        if (!hasAccess) {
-            return res.status(403).json({
-                error: "FORBIDDEN",
-                message: "You don't have permission to perform this action",
-            });
-        }
-
-        next();
-    };
+    next();
+  };
 }
 
 export function checkOptionalPermission(permissions: Permission) {
-    return async (req: Request, res: Response, next: NextFunction) => {
-        const hasAccess = await checkPermission(req, { permissions });
-        (req as any).hasPermission = hasAccess;
-        next();
-    };
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const hasAccess = await checkPermission(req, { permissions });
+    (req as any).hasPermission = hasAccess;
+    next();
+  };
 }
 
 export async function getUserRole(req: Request): Promise<string | null> {
-    try {
-        const session = await auth.api.getSession({
-            headers: fromNodeHeaders(req.headers),
-        });
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
 
-        if (!session || !session.session) {
-            return null;
-        }
+    if (!session || !session.session) return null;
 
-        if (session.session.activeOrganizationId) {
-            try {
-                const headers = fromNodeHeaders(req.headers);
-                
-                const membership = await getActiveMember(
-                    session.session.activeOrganizationId,
-                    headers
-                );
-                
-                if (membership) {
-                    return membership.role;
-                }
-            } catch (e) {
-                console.error("Error getting member:", e);
-            }
-        }
-
-        return (session.user as any).role || null;
-    } catch (error) {
-        console.error("Get user role error:", error);
-        return null;
-    }
+    return (session.user as any).role || null;
+  } catch (error) {
+    return null;
+  }
 }
