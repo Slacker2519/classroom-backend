@@ -26,7 +26,7 @@ async function checkPermission(
 
   const required = options.permissions;
   for (const [resource, actions] of Object.entries(required)) {
-    const allowed = permissions[resource] || [];
+    const allowed: string[] = (permissions as any)[resource] || [];
     const hasAllActions = actions.every((action) => allowed.includes(action));
     if (!hasAllActions) return false;
   }
