@@ -19,7 +19,7 @@ router.get("/", userReadPermission, async (req, res) => {
     const limitPerPage = Math.min(
       Math.max(1, parseInt(String(limit), 10) || 10),
       100,
-    ); // Max 100 records per page
+    );
 
     const offset = (currentPage - 1) * limitPerPage;
 
