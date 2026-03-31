@@ -179,4 +179,32 @@ router.put("/:id", subjectUpdatePermission, async (req, res) => {
   }
 });
 
+router.get("/:id", subjectReadPermission, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "Invalid subject ID" });
+    }
+
+    const [subject] = await db
+      .select({
+        ...getTableColumns(subjects),
+        department: { ...getTableColumns(departments) },
+      })
+      .from(subjects)
+      .leftJoin(departments, eq(subjects.departmentId, departments.id))
+      .where(eq(subjects.id, id))
+      .limit(1);
+
+    if (!subject) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+
+    res.status(200).json({ data: subject });
+  } catch (e) {
+    console.error(`GET /subjects/:id error: ${e}`);
+    res.status(500).json({ error: "Failed to get subject" });
+  }
+});
+
 export default router;
