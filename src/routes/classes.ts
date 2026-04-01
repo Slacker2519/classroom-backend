@@ -162,7 +162,7 @@ router.post("/", classCreatePermission, async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.patch("/:id", async (req, res) => {
   const classId = Number(req.params.id);
 
   if (!Number.isFinite(classId)) {
