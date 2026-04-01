@@ -9,6 +9,7 @@ const router = express.Router();
 const subjectReadPermission = requirePermission({ subject: ["read"] });
 const subjectCreatePermission = requirePermission({ subject: ["create"] });
 const subjectUpdatePermission = requirePermission({ subject: ["update"] });
+const subjectDeletePermission = requirePermission({ subject: ["delete"] });
 
 router.get("/", subjectReadPermission, async (req, res) => {
   try {
@@ -204,6 +205,31 @@ router.get("/:id", subjectReadPermission, async (req, res) => {
   } catch (e) {
     console.error(`GET /subjects/:id error: ${e}`);
     res.status(500).json({ error: "Failed to get subject" });
+  }
+});
+
+router.delete("/:id", subjectDeletePermission, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id as string, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "Invalid subject ID" });
+    }
+
+    const [subjectRecord] = await db
+      .select()
+      .from(subjects)
+      .where(eq(subjects.id, id))
+      .limit(1);
+
+    if (!subjectRecord) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+
+    await db.delete(subjects).where(eq(subjects.id, id));
+    res.status(204).end();
+  } catch (e) {
+    console.error(`DELETE /subjects/:id error: ${e}`);
+    res.status(500).json({ error: "Failed to delete subject" });
   }
 });
 
