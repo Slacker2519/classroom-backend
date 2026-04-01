@@ -23,7 +23,7 @@ if (!frontendUrl) {
 app.use(
   cors({
     origin: frontendUrl,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   }),
 );
