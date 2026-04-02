@@ -226,7 +226,7 @@ router.delete("/:id", subjectDeletePermission, async (req, res) => {
     }
 
     await db.delete(subjects).where(eq(subjects.id, id));
-    res.status(204).json({ data: { id } });
+    res.status(204).send();
   } catch (e) {
     console.error(`DELETE /subjects/:id error: ${e}`);
     res.status(500).json({ error: "Failed to delete subject" });

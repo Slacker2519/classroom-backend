@@ -11,7 +11,7 @@ const router = express.Router();
 const classReadPermission = requirePermission({ class: ["read"] });
 const classCreatePermission = requirePermission({ class: ["create"] });
 
-async function canUpdateClass(req: Request, classId: number): Promise<boolean> {
+async function canModifyClass(req: Request, classId: number): Promise<boolean> {
   const session = await auth.api.getSession({
     headers: req.headers,
   });
@@ -169,7 +169,7 @@ router.patch("/:id", async (req, res) => {
     return res.status(400).json({ error: "Invalid class ID" });
   }
 
-  const canUpdate = await canUpdateClass(req as any, classId);
+  const canUpdate = await canModifyClass(req as any, classId);
   if (!canUpdate) {
     return res.status(403).json({
       error: "FORBIDDEN",
@@ -200,8 +200,32 @@ router.patch("/:id", async (req, res) => {
 
     res.status(200).json({ data: updated });
   } catch (e) {
-    console.error(`PUT /classes/:id error: ${e}`);
+    console.error(`PATCH /classes/:id error: ${e}`);
     res.status(500).json({ error: "Failed to update class" });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ error: "Invalid class ID" });
+  }
+
+  const canDelete = await canModifyClass(req as any, id);
+  if (!canDelete) {
+    return res.status(403).json({
+      error: "FORBIDDEN",
+      message: "You don't have permission to delete this class",
+    });
+  }
+
+  try {
+    await db.delete(classes).where(eq(classes.id, id));
+    res.status(204).send();
+  } catch (e) {
+    console.error(`DELETE /classes/:id error: ${e}`);
+    res.status(500).json({ error: "Failed to delete class" });
   }
 });
 
