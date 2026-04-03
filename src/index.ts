@@ -7,6 +7,7 @@ import usersRouter from "./routes/users.js";
 import classesRouter from "./routes/classes.js";
 import departmentsRouter from "./routes/departments.js";
 import classJoinRequestRouter from "./routes/class-join-requests.js";
+import enrollmentsRouter from "./routes/enrollments.js";
 import cors from "cors";
 import securityMiddleware from "./middleware/security.js";
 import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
@@ -57,6 +58,7 @@ app.use("/api/subjects", subjectsRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/classes", classesRouter);
 app.use("/api/departments", departmentsRouter);
+app.use("/api/enrollments", enrollmentsRouter);
 app.use("/api/class-join-requests", classJoinRequestRouter);
 
 app.get("/", (req, res) => {
