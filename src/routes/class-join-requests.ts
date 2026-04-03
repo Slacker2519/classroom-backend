@@ -8,7 +8,7 @@ import { user } from "../db/schema/auth.js";
 
 const router = express.Router();
 
-async function getSessionUser(req: Request) {
+async function getSessionUser(req: any) {
   const session = await auth.api.getSession({
     headers: req.headers as any,
   });
