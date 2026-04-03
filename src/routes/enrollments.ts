@@ -37,7 +37,6 @@ router.get("/", async (req: any, res: express.Response) => {
       .select({
         classId: enrollments.classId,
         studentId: enrollments.studentId,
-        createdAt: enrollments.createdAt,
         student: {
           id: user.id,
           name: user.name,
