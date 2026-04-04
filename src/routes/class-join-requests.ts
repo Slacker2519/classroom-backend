@@ -88,36 +88,33 @@ router.get("/", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { classId, status } = req.query;
+    const { classId, status } = req.query as { classId?: string; status?: string };
     const userId = session.user.id;
     const userRole = (session.user as any).role;
 
-    if (!classId) {
-      return res.status(400).json({ error: "classId is required" });
-    }
-
-    const classIdNum = Number(classId);
-    if (!Number.isFinite(classIdNum)) {
+    const classIdNum = classId ? Number(classId) : NaN;
+    if (classId && !Number.isFinite(classIdNum)) {
       return res.status(400).json({ error: "Invalid classId" });
     }
 
+    const buildWhere = (extraConditions: ReturnType<typeof eq>[]) => {
+      const conditions = [...extraConditions];
+      if (classIdNum) conditions.push(eq(classJoinRequests.classId, classIdNum));
+      if (status) conditions.push(eq(classJoinRequests.status, status as any));
+      return conditions.length > 0 ? and(...conditions) : undefined;
+    };
+
     if (userRole !== "admin") {
       if (userRole === "teacher") {
-        const [classRecord] = await db
-          .select({ teacherId: classes.teacherId })
-          .from(classes)
-          .where(eq(classes.id, classIdNum))
-          .limit(1);
-        if (classRecord?.teacherId !== userId) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
-      } else {
-        const conditions = [
-          eq(classJoinRequests.classId, classIdNum),
-          eq(classJoinRequests.studentId, userId),
-        ];
-        if (status) {
-          conditions.push(eq(classJoinRequests.status, status as any));
+        if (classIdNum) {
+          const [classRecord] = await db
+            .select({ teacherId: classes.teacherId })
+            .from(classes)
+            .where(eq(classes.id, classIdNum))
+            .limit(1);
+          if (classRecord?.teacherId !== userId) {
+            return res.status(403).json({ error: "Forbidden" });
+          }
         }
         const requests = await db
           .select({
@@ -131,16 +128,26 @@ router.get("/", async (req, res) => {
           })
           .from(classJoinRequests)
           .leftJoin(user, eq(classJoinRequests.studentId, user.id))
-          .where(and(...conditions))
+          .where(buildWhere([]))
           .orderBy(classJoinRequests.createdAt);
-
+        return res.status(200).json({ data: requests });
+      } else {
+        const requests = await db
+          .select({
+            id: classJoinRequests.id,
+            classId: classJoinRequests.classId,
+            studentId: classJoinRequests.studentId,
+            status: classJoinRequests.status,
+            createdAt: classJoinRequests.createdAt,
+            updatedAt: classJoinRequests.updatedAt,
+            student: { id: user.id, name: user.name, email: user.email },
+          })
+          .from(classJoinRequests)
+          .leftJoin(user, eq(classJoinRequests.studentId, user.id))
+          .where(buildWhere([eq(classJoinRequests.studentId, userId)]))
+          .orderBy(classJoinRequests.createdAt);
         return res.status(200).json({ data: requests });
       }
-    }
-
-    const conditions = [eq(classJoinRequests.classId, classIdNum)];
-    if (status) {
-      conditions.push(eq(classJoinRequests.status, status as any));
     }
 
     const requests = await db
@@ -155,7 +162,7 @@ router.get("/", async (req, res) => {
       })
       .from(classJoinRequests)
       .leftJoin(user, eq(classJoinRequests.studentId, user.id))
-      .where(and(...conditions))
+      .where(buildWhere([]))
       .orderBy(classJoinRequests.createdAt);
 
     res.status(200).json({ data: requests });
