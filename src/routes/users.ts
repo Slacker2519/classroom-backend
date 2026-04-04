@@ -1,6 +1,6 @@
 import express from "express";
 import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
-import { user } from "../db/schema/index.js";
+import { user, classes, enrollments } from "../db/schema/index.js";
 import { db } from "../db/index.js";
 import { auth } from "../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
@@ -10,6 +10,13 @@ const router = express.Router();
 
 const userReadPermission = requirePermission({ profile: ["read"] });
 const userCreatePermission = requirePermission({ profile: ["create"] });
+
+async function getSessionUser(req: any) {
+  const session = await auth.api.getSession({
+    headers: req.headers,
+  });
+  return session;
+}
 
 router.get("/", userReadPermission, async (req, res) => {
   try {
@@ -111,6 +118,109 @@ router.post("/", userCreatePermission, async (req, res) => {
         .json({ error: e.message || "Failed to create user" });
     }
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/user", async (req, res) => {
+  try {
+    const session = await getSessionUser(req);
+    if (!session || !session.session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = session.user.id;
+
+    const [userRecord] = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+        createdAt: user.createdAt,
+      })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (!userRecord) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const classesJoined = await db
+      .select({
+        id: classes.id,
+        name: classes.name,
+        status: classes.status,
+      })
+      .from(enrollments)
+      .innerJoin(classes, eq(enrollments.classId, classes.id))
+      .where(eq(enrollments.studentId, userId));
+
+    res.status(200).json({
+      data: {
+        ...userRecord,
+        classesJoined,
+      },
+    });
+  } catch (e) {
+    console.error(`GET /user error: ${e}`);
+    res.status(500).json({ error: "Failed to get user profile" });
+  }
+});
+
+router.patch("/user", async (req, res) => {
+  try {
+    const session = await getSessionUser(req);
+    if (!session || !session.session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = session.user.id;
+    const { name, image } = req.body;
+
+    const updates: Record<string, any> = {};
+    if (name !== undefined) updates.name = name;
+    if (image !== undefined) updates.image = image;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    const [updated] = await db
+      .update(user)
+      .set(updates)
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      });
+
+    res.status(200).json({ data: updated });
+  } catch (e) {
+    console.error(`PATCH /user error: ${e}`);
+    res.status(500).json({ error: "Failed to update user profile" });
+  }
+});
+
+router.delete("/user", async (req, res) => {
+  try {
+    const session = await getSessionUser(req);
+    if (!session || !session.session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = session.user.id;
+
+    await db.delete(user).where(eq(user.id, userId));
+
+    res.status(200).json({ data: { message: "Account deleted successfully" } });
+  } catch (e) {
+    console.error(`DELETE /user error: ${e}`);
+    res.status(500).json({ error: "Failed to delete account" });
   }
 });
 
