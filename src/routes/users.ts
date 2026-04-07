@@ -190,11 +190,12 @@ router.patch("/user", async (req, res) => {
     }
 
     const userId = session.user.id;
-    const { name, image } = req.body;
+    const { name, image, imageCldPubId } = req.body;
 
     const updates: Record<string, any> = {};
     if (name !== undefined) updates.name = name;
     if (image !== undefined) updates.image = image;
+    if (imageCldPubId !== undefined) updates.imageCldPubId = imageCldPubId;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No fields to update" });
