@@ -147,20 +147,33 @@ router.get("/user", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const classesJoined = await db
-      .select({
-        id: classes.id,
-        name: classes.name,
-        status: classes.status,
-      })
-      .from(enrollments)
-      .innerJoin(classes, eq(enrollments.classId, classes.id))
-      .where(eq(enrollments.studentId, userId));
+    let classesList: any[] = [];
+
+    if (userRecord.role === "student") {
+      classesList = await db
+        .select({
+          id: classes.id,
+          name: classes.name,
+          status: classes.status,
+        })
+        .from(enrollments)
+        .innerJoin(classes, eq(enrollments.classId, classes.id))
+        .where(eq(enrollments.studentId, userId));
+    } else if (userRecord.role === "teacher") {
+      classesList = await db
+        .select({
+          id: classes.id,
+          name: classes.name,
+          status: classes.status,
+        })
+        .from(classes)
+        .where(eq(classes.teacherId, userId));
+    }
 
     res.status(200).json({
       data: {
         ...userRecord,
-        classesJoined,
+        classes: classesList,
       },
     });
   } catch (e) {
